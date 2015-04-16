@@ -48,11 +48,11 @@
 		 })						
 		});
 
-		function resetBoard(){			
-				$('.grid').val("");
-				$('.grid').removeClass("solved");
-				$('.grid').removeClass("userSolved");
-				$('.grid').addClass("unsolved");
+		function resetBoard(){
+      $('.solved').val("");
+      $('.grid').removeClass("solved userSolved");			
+			$('.grid').addClass("unsolved");
+      $('#log').html('');
 		}
 		function toggleColor(){
 				$('.grid').toggleClass('noColor');
@@ -115,6 +115,9 @@
 							$(this).addClass('solved');
 							$(this).removeClass('unsolved');
 					}//more than one possible end
+          else{
+            log("(x"+cellx+",y"+celly+") Possible:"+possible);
+          }
 					$('.grid').removeClass('searched');
 				
 				}//blank value end - solve attempted
@@ -139,7 +142,7 @@
 			
 			
 			if(unsolved === 0){	
-				log("Solve success in: "+attempts+" attempts.");
+				log("Solve success in: < "+attempts+" board passes.");
 			}
 			else{
 				log("Solve not completed in "+attempts+" full board passes. Stopped.");				
