@@ -1,0 +1,373 @@
+<html>
+<head> 
+  <title> Sudoku Solver </title>
+	<link rel="stylesheet" href="sudoku.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script>
+	
+		var highlight = 0;
+		
+		$(document).ready(function(){
+		
+      log("Starting Sudoku Solver AI");
+      log("Current Intelligence Level: POTATO");
+      
+			//Function to show 
+			$('#toggleHighlight').click(toggleHighlighting);
+			
+			//Reset Board
+			$('#resetBoard').click(resetBoard);
+			
+			//Color
+			$('#toggleColor').click(toggleColor);
+			
+			$('#solveAll').click(solveAll);			
+			
+			$('.grid').click(solve);      
+      
+			$('.grid').mouseover(function(e){				
+				mouseX=e.pageX;
+				mouseY=e.pageY;
+				
+				//window.outerWidth is not working in IE
+				var windowWidth  = $(window).outerWidth();
+				var windowHeight = $(window).outerHeight(); 
+					
+				var popX = windowWidth - mouseX;
+				var popY = windowHeight - mouseY;
+
+				//set the position first. remove the position attr in css 
+				var pos = $(this).data('possible');
+				if(pos != undefined){
+					$('.popup').text( $(this).data('possible') );				
+					$('.popup').css({position:"absolute",top:mouseY,left:mouseX});
+					//$('.popup').css({position:"absolute",top:t,left:l});
+					$('.popup').show();
+				}			
+     });
+		 $('.grid').mouseout(function(){
+			$('.popup').hide();
+		 })
+     
+     log("Ready... ");
+						
+		});
+
+		function resetBoard(){			
+				$('.grid').val("");
+				$('.grid').removeClass("solved");
+				$('.grid').removeClass("userSolved");
+				$('.grid').addClass("unsolved");
+		}
+		function toggleColor(){
+				$('.grid').toggleClass('noColor');
+		}
+		
+		
+		function solve(){
+				//who called it or who was it called on
+				var cellx = $(this).data('x');
+				var celly = $(this).data('y');
+				//what cluster it belongs to
+				var cluster = $(this).data('cluster');
+				//what value it holds
+				var value = $(this).val();
+				
+				//value is not set, try to solve 
+				if(value == ""){	
+				
+					//related cells 
+					var relatedCellsByClass = [];
+						//on x 
+					relatedCellsByClass.push(".x"+cellx);
+						//on y
+					relatedCellsByClass.push(".y"+celly);
+						//in cluster
+					relatedCellsByClass.push(".c"+cluster);
+					
+					//work out what values it cannot be from checking for values of each related cells
+					var blacklist = [];
+
+					//blacklist cell values
+					for(var related = 0; related < relatedCellsByClass.length; related++){
+						var indexClass = relatedCellsByClass[related];
+						$(indexClass).each(function(){						
+							var tmpval = $(this).val();
+							$(this).addClass('searched');							
+							if(tmpval != ""){
+								blacklist.push(tmpval);	
+							}							
+						});						
+					}
+					
+					//possible values using blacklist
+					var possible = [];
+					
+					//loop over blacklist and test with numbers 1-9
+					for(var i = 1; i < 10; i++){						
+						var blacklisted = blacklist.indexOf(""+i) > -1;						
+						if(blacklisted === false){
+							//not in blacklist - add to possible array
+							possible.push(i+"");
+						}		
+					}					
+					//console.log(" x"+cellx + " y" + celly + " c" + cluster);
+					//when only 1 is possible - set it as solved
+					if(possible.length === 1){
+							log("Solve successfull. Blacklist resulted in unique value.");
+							$(this).val(possible[0]);
+							$(this).addClass('solved');
+							$(this).removeClass('unsolved');
+					}//more than one possible end
+					$('.grid').removeClass('searched');
+				
+				}//blank value end - solve attempted
+				else{		
+						$(this).addClass('userSolved');			
+						$(this).removeClass('unsolved');	
+				}
+		}
+		
+		function solveAll(){		
+			var unsolved = $(".unsolved").length;
+			var attempts = 0;
+		
+			while(unsolved > 0 && attempts < 5){
+				$('.unsolved').each(function(){
+					$( this ).trigger( "click" );		
+				});
+				//timeout 
+				unsolved = $(".unsolved").length;
+				attempts++;
+			}
+			
+			
+			if(unsolved === 0){	
+				console.log("Solve success in: "+attempts+" attempts.");
+			}
+			else{			
+				alert("Solve not completed in "+attempts+" full board passes. Stopped.");
+				console.log("Solve not completed in "+attempts+" full board passes. Stopped.");				
+			}			
+		}
+		
+		function toggleHighlighting(){
+			if( highlight == 1){		
+				$('.grid').each(function(){
+						$(this).off('mouseover');
+						$(this).off('mouseover');
+				});			
+				$(this).text("Highlight (Off)");
+				highlight = 0;
+			}else if( highlight == 0){		
+					$('.grid').each(function(){
+						$(this).mouseover(highLight);
+						$(this).mouseout(unhighLight);	
+						$(this).data('state', 'on');					
+					});
+				$(this).text("Highlight (On)");
+				highlight = 1;			
+		}			
+		}
+		
+		function highLight(){		
+			var value = $(this).text();
+			var x = ".x"+$(this).data('x');
+			var y = ".y"+$(this).data('y');
+			var cluster = ".c"+$(this).data('cluster');
+
+			//highlight all with same x, y and cluster
+			$(cluster).addClass('highlight');
+			$(x).addClass('highlight');
+			$(y).addClass('highlight');
+		}
+		
+		function unhighLight(){		
+			var value = $(this).text();
+			var x = ".x"+$(this).data('x');
+			var y = ".y"+$(this).data('y');
+			var cluster = ".c"+$(this).data('cluster');
+
+			//highlight all with same x, y and cluster
+				$(cluster).removeClass('highlight');
+				$(x).removeClass('highlight');
+				$(y).removeClass('highlight');			
+		}
+	
+    function log(message){
+      $('#log').html(message+'<br/>'+$('#log').html()+'');      
+    }
+    
+		function clusterCell(x, y){
+			if(x == 0 || x == 1 || x == 2){
+			//row 1
+			 if(y == 0 || y == 1 || y ==2){
+				//cluster 1
+				return 0;
+			 }
+			 else if(y == 3 || y == 4 || y ==5){
+				//cluster 2
+				return 1;
+			 }
+			 else if(y == 6 || y == 7 || y ==8){
+				//cluster 3
+				return 2;
+			 }
+		}
+		else if(x == 3 || x == 4 || x == 5){
+			//row 2
+			 if(y == 0 || y == 1 || y ==2){
+				//cluster 4
+				return 3;
+			 }
+			 else if(y == 3 || y == 4 || y ==5){
+				//cluster 5
+				return 4;
+			 }
+			 else if(y == 6 || y == 7 || y ==8){
+				//cluster 6
+				return 5;
+			 }
+		}
+		else if(x == 6 || x == 7 || x == 8){
+			//row 3
+			if(y == 0 || y == 1 || y ==2){
+				//cluster 7
+				return 6;
+			 }
+			 else if(y == 3 || y == 4 || y ==5){
+				//cluster 8
+				return 7;
+			 }
+			 else if(y == 6 || y == 7 || y ==8){
+				//cluster 9
+				return 8;
+			 }
+		}
+}
+	
+		
+	</script>
+</head>
+<body>
+<div class="popup"> </div>
+	<div id="board">	
+		<input class="grid unsolved c0 x0 y0" type="text" data-cluster="0" data-y="0" data-x="0">
+		<input class="grid unsolved c0 x0 y1" type="text" data-cluster="0" data-y="1" data-x="0">
+		<input class="grid unsolved c0 x0 y2" type="text" data-cluster="0" data-y="2" data-x="0">
+		<input class="grid unsolved c1 x0 y3" type="text" data-cluster="1" data-y="3" data-x="0">
+		<input class="grid unsolved c1 x0 y4" type="text" data-cluster="1" data-y="4" data-x="0" value="9">
+		<input class="grid unsolved c1 x0 y5" type="text" data-cluster="1" data-y="5" data-x="0" value="7">
+		<input class="grid unsolved c2 x0 y6" type="text" data-cluster="2" data-y="6" data-x="0">
+		<input class="grid unsolved c2 x0 y7" type="text" data-cluster="2" data-y="7" data-x="0">
+		<input class="grid unsolved c2 x0 y8" type="text" data-cluster="2" data-y="8" data-x="0" value="1">
+		
+		<input class="grid unsolved c0 x1 y0" type="text" data-cluster="0" data-y="0" data-x="1">
+		<input class="grid unsolved c0 x1 y1" type="text" data-cluster="0" data-y="1" data-x="1" value="3">
+		<input class="grid unsolved c0 x1 y2" type="text" data-cluster="0" data-y="2" data-x="1" value="5">
+		<input class="grid unsolved c1 x1 y3" type="text" data-cluster="1" data-y="3" data-x="1" value="1">
+		<input class="grid unsolved c1 x1 y4" type="text" data-cluster="1" data-y="4" data-x="1">
+		<input class="grid unsolved c1 x1 y5" type="text" data-cluster="1" data-y="5" data-x="1">
+		<input class="grid unsolved c2 x1 y6" type="text" data-cluster="2" data-y="6" data-x="1">
+		<input class="grid unsolved c2 x1 y7" type="text" data-cluster="2" data-y="7" data-x="1">
+		<input class="grid unsolved c2 x1 y8" type="text" data-cluster="2" data-y="8" data-x="1" value="9">
+		
+		<input class="grid unsolved c0 x2 y0" type="text" data-cluster="0" data-y="0" data-x="2" value="1">
+		<input class="grid unsolved c0 x2 y1" type="text" data-cluster="0" data-y="1" data-x="2">
+		<input class="grid unsolved c0 x2 y2" type="text" data-cluster="0" data-y="2" data-x="2">
+		<input class="grid unsolved c1 x2 y3" type="text" data-cluster="1" data-y="3" data-x="2">
+		<input class="grid unsolved c1 x2 y4" type="text" data-cluster="1" data-y="4" data-x="2" value="8">
+		<input class="grid unsolved c1 x2 y5" type="text" data-cluster="1" data-y="5" data-x="2" value="5">
+		<input class="grid unsolved c2 x2 y6" type="text" data-cluster="2" data-y="6" data-x="2">
+		<input class="grid unsolved c2 x2 y7" type="text" data-cluster="2" data-y="7" data-x="2">
+		<input class="grid unsolved c2 x2 y8" type="text" data-cluster="2" data-y="8" data-x="2" value="4">
+		
+		<input class="grid unsolved c3 x3 y0" type="text" data-cluster="3" data-y="0" data-x="3" value="5">
+		<input class="grid unsolved c3 x3 y1" type="text" data-cluster="3" data-y="1" data-x="3">
+		<input class="grid unsolved c3 x3 y2" type="text" data-cluster="3" data-y="2" data-x="3" value="9">
+		<input class="grid unsolved c4 x3 y3" type="text" data-cluster="4" data-y="3" data-x="3">
+		<input class="grid unsolved c4 x3 y4" type="text" data-cluster="4" data-y="4" data-x="3">
+		<input class="grid unsolved c4 x3 y5" type="text" data-cluster="4" data-y="5" data-x="3">
+		<input class="grid unsolved c5 x3 y6" type="text" data-cluster="5" data-y="6" data-x="3" value="1">
+		<input class="grid unsolved c5 x3 y7" type="text" data-cluster="5" data-y="7" data-x="3">
+		<input class="grid unsolved c5 x3 y8" type="text" data-cluster="5" data-y="8" data-x="3" value="6">
+		
+		<input class="grid unsolved c3 x4 y0" type="text" data-cluster="3" data-y="0" data-x="4">
+		<input class="grid unsolved c3 x4 y1" type="text" data-cluster="3" data-y="1" data-x="4">
+		<input class="grid unsolved c3 x4 y2" type="text" data-cluster="3" data-y="2" data-x="4" value="1">
+		<input class="grid unsolved c4 x4 y3" type="text" data-cluster="4" data-y="3" data-x="4">
+		<input class="grid unsolved c4 x4 y4" type="text" data-cluster="4" data-y="4" data-x="4" value="2">
+		<input class="grid unsolved c4 x4 y5" type="text" data-cluster="4" data-y="5" data-x="4">
+		<input class="grid unsolved c5 x4 y6" type="text" data-cluster="5" data-y="6" data-x="4" value="5">
+		<input class="grid unsolved c5 x4 y7" type="text" data-cluster="5" data-y="7" data-x="4">
+		<input class="grid unsolved c5 x4 y8" type="text" data-cluster="5" data-y="8" data-x="4">
+		
+		<input class="grid unsolved c3 x5 y0" type="text" data-cluster="3" data-y="0" data-x="5" value="2">
+		<input class="grid unsolved c3 x5 y1" type="text" data-cluster="3" data-y="1" data-x="5">
+		<input class="grid unsolved c3 x5 y2" type="text" data-cluster="3" data-y="2" data-x="5" value="7">
+		<input class="grid unsolved c4 x5 y3" type="text" data-cluster="4" data-y="3" data-x="5">
+		<input class="grid unsolved c4 x5 y4" type="text" data-cluster="4" data-y="4" data-x="5">
+		<input class="grid unsolved c4 x5 y5" type="text" data-cluster="4" data-y="5" data-x="5">
+		<input class="grid unsolved c5 x5 y6" type="text" data-cluster="5" data-y="6" data-x="5" value="9">
+		<input class="grid unsolved c5 x5 y7" type="text" data-cluster="5" data-y="7" data-x="5">
+		<input class="grid unsolved c5 x5 y8" type="text" data-cluster="5" data-y="8" data-x="5" value="8">
+		
+		<input class="grid unsolved c6 x6 y0" type="text" data-cluster="6" data-y="0" data-x="6" value="9">
+		<input class="grid unsolved c6 x6 y1" type="text" data-cluster="6" data-y="1" data-x="6">
+		<input class="grid unsolved c6 x6 y2" type="text" data-cluster="6" data-y="2" data-x="6">
+		<input class="grid unsolved c7 x6 y3" type="text" data-cluster="7" data-y="3" data-x="6" value="8">
+		<input class="grid unsolved c7 x6 y4" type="text" data-cluster="7" data-y="4" data-x="6" value="3">
+		<input class="grid unsolved c7 x6 y5" type="text" data-cluster="7" data-y="5" data-x="6">
+		<input class="grid unsolved c8 x6 y6" type="text" data-cluster="8" data-y="6" data-x="6">
+		<input class="grid unsolved c8 x6 y7" type="text" data-cluster="8" data-y="7" data-x="6">
+		<input class="grid unsolved c8 x6 y8" type="text" data-cluster="8" data-y="8" data-x="6" value="5">
+		
+		<input class="grid unsolved c6 x7 y0" type="text" data-cluster="6" data-y="0" data-x="7" value="4">
+		<input class="grid unsolved c6 x7 y1" type="text" data-cluster="6" data-y="1" data-x="7">
+		<input class="grid unsolved c6 x7 y2" type="text" data-cluster="6" data-y="2" data-x="7">
+		<input class="grid unsolved c7 x7 y3" type="text" data-cluster="7" data-y="3" data-x="7">
+		<input class="grid unsolved c7 x7 y4" type="text" data-cluster="7" data-y="4" data-x="7">
+		<input class="grid unsolved c7 x7 y5" type="text" data-cluster="7" data-y="5" data-x="7" value="9">
+		<input class="grid unsolved c8 x7 y6" type="text" data-cluster="8" data-y="6" data-x="7" value="8">
+		<input class="grid unsolved c8 x7 y7" type="text" data-cluster="8" data-y="7" data-x="7" value="6">
+		<input class="grid unsolved c8 x7 y8" type="text" data-cluster="8" data-y="8" data-x="7">
+		
+		<input class="grid unsolved c6 x8 y0" type="text" data-cluster="6" data-y="0" data-x="8" value="6">
+		<input class="grid unsolved c6 x8 y1" type="text" data-cluster="6" data-y="1" data-x="8">
+		<input class="grid unsolved c6 x8 y2" type="text" data-cluster="6" data-y="2" data-x="8">
+		<input class="grid unsolved c7 x8 y3" type="text" data-cluster="7" data-y="3" data-x="8" value="2">
+		<input class="grid unsolved c7 x8 y4" type="text" data-cluster="7" data-y="4" data-x="8" value="1">
+		<input class="grid unsolved c7 x8 y5" type="text" data-cluster="7" data-y="5" data-x="8">
+		<input class="grid unsolved c8 x8 y6" type="text" data-cluster="8" data-y="6" data-x="8">
+		<input class="grid unsolved c8 x8 y7" type="text" data-cluster="8" data-y="7" data-x="8">
+		<input class="grid unsolved c8 x8 y8" type="text" data-cluster="8" data-y="8" data-x="8">
+		
+		<!--script>
+			for(x = 0; x < 9; x++){	
+			//group 
+				for(y = 0; y < 9; y++){
+					var cluster = clusterCell(x, y);	
+					var cls = "grid c"+cluster+" x"+x+" y"+y;
+					document.write("<input type='text' class='"+cls+"' data-x='"+x+"' data-y='"+y+"' data-cluster='"+cluster+"'></input>");
+				}
+			}
+			</script-->
+	</div>
+	<div id="console">
+    <h1> Sudoku Solver</h1>
+    <p> Click a cell to try solve it. </p>
+		<button id="solveAll">Auto Solve</button> 
+		<br />
+    Preset: 
+		<select><option>Easy</option><option>Medium</option><option>Hard</option></select> <button id="resetBoard">Reset Board</button>
+		<br />		
+		<br />		
+		<hr />
+		<h3> Utilities </h3>
+		<button id="toggleHighlight">Highlighting</button>		
+		<br />
+		<button id="toggleColor">Toggle Color</button>     	
+	</div>
+<div id="log"></div>
+</body>
+</html>

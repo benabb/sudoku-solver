@@ -1,0 +1,106 @@
+#board{
+	width: 400px;
+	height: 400px;
+	float: left;
+	margin: 0em;
+	padding: 20px;
+}
+.grid{
+	width: 11.11%;
+	height: 11.11%;	
+	float:left;	
+	border: 1px solid #ccc;	
+	text-align:center;
+}
+#console{
+	float: left;
+	margin: 0;
+  padding: 0;
+  width: 20em;
+}
+#log{
+	float: right;
+  width: 450px;
+  margin: 30px 10px 0 0;
+  border: 1px solid #ccc;
+  overflow-y: scroll;
+  height: 80%;
+  background: #2b2b2b;
+  padding: 15px;
+  color: lime;
+}
+button{
+	padding: 0.5em;
+	margin: 1em;
+}
+.popup{
+	height: 2em;
+	position: fixed;
+	border: 2px solid;
+	background: hsla(0, 100%, 0%, 0.4);
+	display: none;
+	color: #fff;
+}
+
+.c0{
+ background: hsla(0, 20%, 0%, 0.30);		
+}
+.c1{
+	background: hsla(0, 20%, 0%, 0.35);	
+}
+.c2{
+	background: hsla(0, 20%, 0%, 0.30);	
+}
+.c3{
+	background: hsla(0, 20%, 0%, 0.35);
+}
+.c4{
+	background: hsla(0, 20%, 0%, 0.30);	
+}
+.c5{
+	background: hsla(0, 20%, 0%, 0.35);
+}
+.c6{
+	background: hsla(0, 20%, 0%, 0.30);	
+	}
+.c7{
+	background: hsla(0, 20%, 0%, 0.35);
+}
+.c8{
+	background: hsla(0, 20%, 0%, 0.30);	
+}
+
+.highlight{
+	background: black;
+	color: white;
+}
+.searched{
+	background: yellow;
+}
+.blacklisted{
+	background: red;
+	color: white;
+}
+.calcd{
+	background: red;
+}
+.solved{
+	background: green;
+	color: black;
+}
+.userSolved{
+	background: limegreen;
+	color: black;
+}
+.crossSolved{
+	background: orange;
+	color: black;
+}
+.noColor{
+	background: #fff;
+}
+
+.skipped{
+	background: yellow;
+}
+
