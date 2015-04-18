@@ -1,9 +1,24 @@
 	
 		var highlight = 0;
     var presets;
+    var timer = new Date();
+    //Initialize board references and data containers
+    //the dom ids of each cell
+    var cellids = ['#00','#10','#20','#30','#40','#50','#60','#70','#80','#01','#11','#21','#31','#41','#51','#61','#71','#81','#02','#12','#22','#32','#42','#52','#62','#72','#82','#03','#13','#23','#33','#43','#53','#63','#73','#83','#04','#14','#24','#34','#44','#54','#64','#74','#84','#05','#15','#25','#35','#45','#55','#65','#75','#85','#06','#16','#26','#36','#46','#56','#66','#76','#86','#07','#17','#27','#37','#47','#57','#67','#77','#87','#08','#18','#28','#38','#48','#58','#68','#78','#88'];
+    //possible values for each cell by id
+    var possible = [];
+      //make sure we set up keys
+      for(var i = 0; i < cellids.length; i++){        
+        possible[cellids[i]] = null;
+      }
+      
+    // cells related to cellid (key) on axis (x,y,c) 
+    var relatedCellsX = [], relatedCellsY = [], relatedCellsC = []; 
+
+     
     
-		
 		$(document).ready(function(){
+      calculateRelations();
       log("Current Intelligence Level: POTATO");
       
 			//Function to show 
@@ -17,9 +32,11 @@
 			
 			$('#solveAll').click(solveAll);			
 			
-			$('.grid').click(solve); 
+			$('.grid').click(solveThis); 
       
-      $('#json').click(presetJSON);      
+      $('#json').click(presetJSON);   
+
+      $('#difficulty').change(presetBoard);
       
 			$('.grid').mouseover(function(e){				
 				mouseX=e.pageX;
@@ -55,103 +72,199 @@
       $('.grid').val('');
       $('.grid').removeClass("solved userSolved");			
 			$('.grid').addClass("unsolved");
-      $('#log').html('');      
-      loadPreset();
+      $('#log').html('');  
 		}
+    
+    function presetBoard(){
+       resetBoard();
+       loadPreset();
+    }
     
 		function toggleColor(){
 				$('.grid').toggleClass('noColor');
 		}
 		
-		
-		function solve(){
-				//who called it or who was it called on
-				var cellx = $(this).data('x');
+    function crossPossibilitySolve(){
+        var cellx = $(this).data('x');
 				var celly = $(this).data('y');
-				//what cluster it belongs to
-				var cluster = $(this).data('cluster');
-				//what value it holds
-				var value = $(this).val();
-				
-				//value is not set, try to solve 
-				if(value == ""){	
-				
-					//related cells 
-					var relatedCellsByClass = [];
-						//on x 
-					relatedCellsByClass.push(".x"+cellx);
-						//on y
-					relatedCellsByClass.push(".y"+celly);
-						//in cluster
-					relatedCellsByClass.push(".c"+cluster);
-					
-					//work out what values it cannot be from checking for values of each related cells
-					var blacklist = [];
+        var cluster = $(this).data('cluster');
+        
+        /*
+          for each related cell on /axis/
+            calculate possible / fetch possible where val = ''            
+                3,5,6
+                 3,1,5
+                  3,1  
+           == one with 6 is a 6.
+           count each?
+           3x3 5x2 1x2 6x1
+           where # of occurances = 1
+            get cell with # with 1 occurances
+            set val to #
+        */  
+    }
+    
+    /*
+     * Loop over all cells in idlist and generate relationships based on axis
+     */
+     function calculateRelations(){      
+      var start = new Date().getMilliseconds();       
+       for(i = 0; i < cellids.length; i++){
+          var cellid = cellids[i];         
+          //hassh is cellid[0]
+          var x = cellid[1];
+          var y = cellid[2];
+          var c = $(cellid).data('cluster');
+          //related by x
+          var relatedByX = [];
+          $('.x'+x).each(function(){
+            var tmpid = '#'+$(this).attr('id');          
+            if(tmpid === cellid){
+              //skip
+            }
+            else{
+              //add
+              relatedByX.push('#'+$(this).attr('id'));              
+            }           
+          });          
+          var relatedByY = [];
+          $('.y'+y).each(function(){
+            var tmpid = '#'+$(this).attr('id');          
+            if(tmpid === cellid){
+              //skip
+            }
+            else{
+              //add
+              relatedByY.push('#'+$(this).attr('id'));
+            }           
+          });          
+          var relatedByC = [];
+          $('.c'+c).each(function(){
+            var tmpid = '#'+$(this).attr('id');          
+            if(tmpid === cellid){
+               //skip
+            }
+            else{
+              //add
+              relatedByC.push('#'+$(this).attr('id'));
+            }           
+          });
+          //attach relations by axis to array by key
+          relatedCellsX[cellid] = relatedByX;
+          relatedCellsY[cellid] = relatedByY;
+          relatedCellsC[cellid] = relatedByC;
+        }       
+       //report ttc
+       var elapsed  = new Date().getMilliseconds() - start;
+        log('Generated relations in '+elapsed+"ms");
+     }
+         
+    /*
+     *  Works out possible cells by blacklisting values from related cells
+     *  takes: cellid = #xy
+     */   
+    function calculatePossible(cellid){ 
+        var start = new Date().getMilliseconds();
+        //every possible cell related to cellid
+        var allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid]];
+        
+        //work out blacklist by checking for values in related cells
+        var blacklist = [];
+        
+        for(var i = 0; i < allRelatedCells.length; i++){
+          var relatedAxis = allRelatedCells[i];          
+          for(var j = 0; j < relatedAxis.length; j++){
+            var tmpcell = relatedAxis[j];            
+            var tmpval = $(tmpcell).val();
+            if(tmpval != ""){
+              blacklist.push(tmpval);
+            }
+          }          
+        }
+       //update possible values       
+       //reset current
+       possible[cellid] = [];
+       
+       //loop over blacklist and test with numbers 1-9
+       for(var i = 1; i < 10; i++){						
+          var blacklisted = blacklist.indexOf(""+i) > -1;						
+          if(blacklisted === false){
+            //not in blacklist - add to possible array
+            possible[cellid].push(i);
+          }		
+       }
+       var elapsed = new Date().getMilliseconds() - start;
+       console.log("Probabilities calculated in "+elapsed+"ms");
+    }
+    
+    /*
+     * Solve wrapper when cell clicked
+     */
+		function solveThis(){
+       solve('#'+$(this).attr('id'));
+    } 
+    
+    /*
+     *  The meat in this sandwich
+     */
+		function solve(cellid){
+      var start = new Date().getMilliseconds();
+      
+      var cellid = cellid;
+      var value = $(cellid).val();
+      
+      //try to solve
+      if(value === ''){
+        calculatePossible(cellid);
+        
+        var possiblevalues = possible[cellid]; 
+        
+        if(possiblevalues.length === 1){        
+          $(cellid).val(possiblevalues[0]);
+          $(cellid).removeClass('unsolved');
+          $(cellid).addClass('solved');
+          log('x'+cellid[1]+'y'+cellid[2]+' solved. single possibilty remained.');          
+          //trigger update to related cells possibles now? 
+        }
+        else{          
+          log(possiblevalues+' possible in x'+cellid[1]+'y'+cellid[2]);
+        }
+      }
+      else{
+        //value isnt blank so must be solved by user
+        $(this).addClass('userSolved');			
+				$(this).removeClass('unsolved');
+      }
 
-					//blacklist cell values
-					for(var related = 0; related < relatedCellsByClass.length; related++){
-						var indexClass = relatedCellsByClass[related];
-						$(indexClass).each(function(){						
-							var tmpval = $(this).val();
-							$(this).addClass('searched');							
-							if(tmpval != ""){
-								blacklist.push(tmpval);	
-							}							
-						});						
-					}
-					
-					//possible values using blacklist
-					var possible = [];
-					
-					//loop over blacklist and test with numbers 1-9
-					for(var i = 1; i < 10; i++){						
-						var blacklisted = blacklist.indexOf(""+i) > -1;						
-						if(blacklisted === false){
-							//not in blacklist - add to possible array
-							possible.push(i+"");
-						}		
-					}					
-					//console.log(" x"+cellx + " y" + celly + " c" + cluster);
-					//when only 1 is possible - set it as solved
-					if(possible.length === 1){
-          
-							log("(x"+cellx+",y"+celly+") Success! Blacklist resulted in unique value.");              
-							$(this).val(possible[0]);
-							$(this).addClass('solved');
-							$(this).removeClass('unsolved');
-					}//more than one possible end
-          else{
-            log("(x"+cellx+",y"+celly+") Possible:"+possible);
-          }
-					$('.grid').removeClass('searched');
-				
-				}//blank value end - solve attempted
-				else{		
-						$(this).addClass('userSolved');			
-						$(this).removeClass('unsolved');	
-				}
-		}
+      var elapsed = new Date().getMilliseconds() - start;
+      console.log("Solve attempted in "+elapsed+"ms");
+    }
 		
 		function solveAll(){		
-			var unsolved = $(".unsolved").length;
+      var start = new Date().getMilliseconds(); 
+      
+      var unsolved = $(".unsolved").length;
 			var attempts = 0;
-		
+      
 			while(unsolved > 0 && attempts < 6){
-				$('.unsolved').each(function(){
-					$( this ).trigger( "click" );		
-				});
-				//timeout 
+        
+        //loop over each cellid
+        for(var i = 0; i < cellids.length; i++){          
+          solve(cellids[i]);          
+        }      
+				
 				unsolved = $(".unsolved").length;
 				attempts++;
 			}
-			
-			
+
+      var elapsed = new Date().getMilliseconds() - start;
+      
 			if(unsolved === 0){	
-				log("Solve success in: < "+attempts+" board passes.");
+				log("Solve success in: < "+attempts+" board passes. Time taken: "+elapsed+" ms");
 			}
 			else{
-				log("Solve not completed in "+attempts+" full board passes. Stopped.");				
-			}			
+				log("Solve not completed in "+attempts+" full board passes. Stopped after "+elapsed+" ms");				
+			}	
 		}
 		
 		function toggleHighlighting(){
@@ -223,6 +336,8 @@
         $(xclass).each(function(){          
           if($(this).attr('data-y') == tmpcell[1]){
             $(this).val(tmpcell[2]);
+            $(this).removeClass('unsolved');
+            $(this).addClass('userSolved');
           }          
         });
       }      
