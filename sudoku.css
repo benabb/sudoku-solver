@@ -71,11 +71,6 @@ button{
 .c8{
 	background: hsla(0, 20%, 0%, 0.30);	
 }
-
-.highlight{
-	background: black;
-	color: white;
-}
 .searched{
 	background: yellow;
 }
@@ -90,13 +85,17 @@ button{
 	background: green;
 	color: black;
 }
-.userSolved{
-	background: #2b2b2b;
-	color: #fff;
-}
 .crossSolved{
 	background: limegreen;
 	color: black;
+}
+.highlight{
+	background: black;
+	color: white;
+}
+.userSolved{
+	background: #2b2b2b;
+	color: #fff;
 }
 .skipped{
 	background: yellow;
@@ -104,3 +103,4 @@ button{
 .invalid{
 	background: red;
 }
+

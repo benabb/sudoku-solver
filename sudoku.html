@@ -89,17 +89,6 @@
     <input class="grid unsolved c8 y8 x6" type="text" id="68" data-cluster="8" data-x="6" data-y="8">
     <input class="grid unsolved c8 y8 x7" type="text" id="78" data-cluster="8" data-x="7" data-y="8">
     <input class="grid unsolved c8 y8 x8" type="text" id="88" data-cluster="8" data-x="8" data-y="8">
-		
-		<!--script>
-			for(x = 0; x < 9; x++){	
-			//group 
-				for(y = 0; y < 9; y++){
-					var cluster = clusterCell(x, y);	
-					var cls = "grid c"+cluster+" x"+x+" y"+y;
-					document.write("<input type='text' class='"+cls+"' data-x='"+x+"' data-y='"+y+"' data-cluster='"+cluster+"'></input>");
-				}
-			}
-			</script-->
 	</div>
 	<div id="console">
     <h1> Sudoku Solver</h1>
@@ -107,7 +96,9 @@
 		<button id="solveAll">Auto Solve</button> 
 		<br />
     Preset: 
-		<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select> <button id="resetBoard">Reset Board</button>
+		<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select> <button id="preset">Load Preset</button> 
+    <br />	
+    <button id="resetBoard">Reset Board</button>
 		<br />		
 		<br />		
 		<hr />

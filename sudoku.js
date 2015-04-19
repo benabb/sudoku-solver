@@ -25,18 +25,24 @@
     $.getJSON("preset.json", function(data) {
       presets = data;
       log('Presets loaded');
+      presetBoard();
     });
-
+    
     /*
      *  Button Binds
      */
+    //add a number 
+    $('.grid').keyup(function(){
+       calculateAllPossible();      
+    });
     //solve when clicked 
     $('.grid').click(solveThis);
     //solve all
     $('#solveAll').click(solveAll);
     //Reset Board & Load a preset
     $('#resetBoard').click(resetBoard);
-    $('#difficulty').on('change click', presetBoard);
+    $('#difficulty').change(presetBoard);
+    $('#preset').click(presetBoard);
     // Validate Solution
     $('#validate').click(validateSolution);
     
@@ -314,7 +320,7 @@
           if (tmppos.indexOf(onlyhere[0]) > -1) {
             // found!!!  
             var foundcell = cellsInCount[j];
-            log('x' + foundcell[1] + 'y' + foundcell[2] + ' solved using cross possibility solve.');
+            log('x' + foundcell[1] + 'y' + foundcell[2] + ' solved as hidden single.');
             $(foundcell).val(onlyhere[0]);
             $(foundcell).removeClass('unsolved');
             $(foundcell).addClass('crossSolved');
@@ -325,7 +331,34 @@
       }
     }
   }
-
+  
+  /*
+   *  Attempt Elimination via Naked Pairs
+   */
+  function findNakedPairs(){
+    // if 2 related cells by column, row or box have the same 2 possible remaining
+      // and only these possibilities remaining eg cells x0y0 an x0y1 have both 1,4
+          //and only 1,4 as possibilities    
+    //then these possibilities can be removed from every other cell on the shared axis.
+    
+  }
+  
+  /*
+   *  Attempt Elimination via Pointing Pairs / Triples
+   */
+  function findPointingSets(){
+    //chooses a row / column
+   
+    // looks for the same number occurring in possibles 2/3 times
+    
+    //if the number can only occur in this row / column in the cluster 
+    // (ie is not possible elsewhere in cluster)
+    
+      //any other occurrences of number in possibles along the row / column
+      // (ie possibles of related cells by row / column) can be removed    
+  }
+   
+   
   /*
    *  Attempts to clear the board by running through
    *  all solve algorithms available
@@ -511,11 +544,25 @@
    *  It loads presets from json file and adds 
    *  the values to the board.
    */
+   var last = [];
   function loadPreset() {
     //what preset to load      
     var difficulty = $('#difficulty').val();
     var difficultyPresets = presets[difficulty];
     var cells = difficultyPresets[0];
+    
+    //randomize from file
+    if(difficultyPresets.length > 1){
+      //pick a random number between 1 and length
+      var rand = Math.floor((Math.random() * difficultyPresets.length));
+      while (rand === last[difficulty]){
+        //roll again
+        rand = Math.floor((Math.random() * difficultyPresets.length));
+      }
+      cells = difficultyPresets[rand];  
+      last[difficulty] = rand;
+    }
+    
     for (var key in cells) {
       var tmpcell = cells[key];
       var xclass = '.x' + tmpcell[0];
