@@ -91,11 +91,11 @@ button{
 	color: black;
 }
 .userSolved{
-	background: limegreen;
-	color: black;
+	background: #2b2b2b;
+	color: #fff;
 }
 .crossSolved{
-	background: yellow;
+	background: limegreen;
 	color: black;
 }
 .skipped{

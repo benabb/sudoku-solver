@@ -363,28 +363,34 @@
     //try something else
     else{
       //start counting fails again
-      consecutiveFails = 0;      
+           
   
       log("Looking for hidden singles...");
       //pass board for hidden singles
       for (var i = 0; i < cellids.length; i++) {
         hiddenSinglesSolve(cellids[i]);
-        consecutiveFails++;
       }
       
       //try another pass with simpleSolve
       log("Trying simple solve...")
-      for (var i = 0; i < cellids.length; i++) {
-        simpleSolve(cellids[i]);
-      }        
-      
+      consecutiveFails = 0; 
+      while (unsolved > 0 && consecutiveFails < 162) {
+        for (var i = 0; i < cellids.length; i++) {
+          simpleSolve(cellids[i]);
+          if(consecutiveFails == 162)
+            break;
+        }
+        unsolved = $(".unsolved").length;
+        attempts++;  
+      }
       
       //hidden singles
       elapsed = new Date().getMilliseconds() - start;
       log("Complete in: "+elapsed+" ms.");
       
-      if( $('unsolved').length === 0  ){
-        log("Solution found.");
+      unsolved = $(".unsolved").length;
+      if(unsolved === 0){
+        log("Solution found.");        
         validateSolution();
       }
       else{
@@ -484,8 +490,8 @@
    *  Prints to logging div
    */
   function log(message) {
-    //$('#log').html(message+'<br/>'+$('#log').html()+'');
-    $('#log').append(message + '<br/>');
+    $('#log').html(message+'<br/>'+$('#log').html()+'');
+    //$('#log').append(message + '<br/>');
   }
 
   /*
