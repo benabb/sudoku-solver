@@ -1,2 +1,3 @@
 # sudoku-solver
-It should be able to figure them out
+##### It's still not as good as grandma#####
+*Currently Solving Easy, Medium (Sometimes) and Hard (Sometimes)* :thumbsup:
