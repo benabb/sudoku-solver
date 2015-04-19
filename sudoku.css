@@ -40,6 +40,8 @@ button{
 	background: hsla(0, 100%, 0%, 0.4);
 	display: none;
 	color: #fff;
+  margin-top: 10px;
+  margin-left: 10px;
 }
 
 .c0{
@@ -96,10 +98,6 @@ button{
 	background: yellow;
 	color: black;
 }
-.noColor{
-	background: #fff;
-}
-
 .skipped{
 	background: yellow;
 }
