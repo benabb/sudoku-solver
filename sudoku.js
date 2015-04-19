@@ -1,7 +1,7 @@
-	
-		var highlight = 0;
-    var presets;
-    var timer = new Date();
+  var highlight = 0;
+  var presets;
+  var consecutiveFails = 0;
+  
     //Initialize board references and data containers
     //the dom ids of each cell
     var cellids = ['#00','#10','#20','#30','#40','#50','#60','#70','#80','#01','#11','#21','#31','#41','#51','#61','#71','#81','#02','#12','#22','#32','#42','#52','#62','#72','#82','#03','#13','#23','#33','#43','#53','#63','#73','#83','#04','#14','#24','#34','#44','#54','#64','#74','#84','#05','#15','#25','#35','#45','#55','#65','#75','#85','#06','#16','#26','#36','#46','#56','#66','#76','#86','#07','#17','#27','#37','#47','#57','#67','#77','#87','#08','#18','#28','#38','#48','#58','#68','#78','#88'];
@@ -14,8 +14,6 @@
       
     // cells related to cellid (key) on axis (x,y,c) 
     var relatedCellsX = [], relatedCellsY = [], relatedCellsC = []; 
-
-     
     
 		$(document).ready(function(){
       calculateRelations();
@@ -34,7 +32,12 @@
 			
 			$('.grid').click(solveThis); 
       
-      $('#json').click(presetJSON);   
+      $('#json').click(presetJSON); 
+      
+      $.getJSON( "preset.json", function(data){
+          presets = data;
+          log('Presets loaded');
+      });
 
       $('#difficulty').change(presetBoard);
       
@@ -50,27 +53,25 @@
 				var popY = windowHeight - mouseY;
 
 				//set the position first. remove the position attr in css 
-				var pos = $(this).data('possible');
+				var pos = possible['#'+$(this).attr('id')];
+        
 				if(pos != undefined){
-					$('.popup').text( $(this).data('possible') );				
+					$('.popup').text(possible['#'+$(this).attr('id')]+' possible');				
 					$('.popup').css({position:"absolute",top:mouseY,left:mouseX});
 					//$('.popup').css({position:"absolute",top:t,left:l});
 					$('.popup').show();
 				}			
      });
+     
 		 $('.grid').mouseout(function(){
 			$('.popup').hide();
 		 })	
-
-      $.getJSON( "preset.json", function(data){
-        presets = data;
-        log('Presets loaded');
-      });
 		});
 
 		function resetBoard(){
+      possible = [];
       $('.grid').val('');
-      $('.grid').removeClass("solved userSolved");			
+      $('.grid').removeClass("solved userSolved crossSolved");			
 			$('.grid').addClass("unsolved");
       $('#log').html('');  
 		}
@@ -83,27 +84,7 @@
 		function toggleColor(){
 				$('.grid').toggleClass('noColor');
 		}
-		
-    function crossPossibilitySolve(){
-        var cellx = $(this).data('x');
-				var celly = $(this).data('y');
-        var cluster = $(this).data('cluster');
-        
-        /*
-          for each related cell on /axis/
-            calculate possible / fetch possible where val = ''            
-                3,5,6
-                 3,1,5
-                  3,1  
-           == one with 6 is a 6.
-           count each?
-           3x3 5x2 1x2 6x1
-           where # of occurances = 1
-            get cell with # with 1 occurances
-            set val to #
-        */  
-    }
-    
+ 
     /*
      * Loop over all cells in idlist and generate relationships based on axis
      */
@@ -164,7 +145,6 @@
      *  takes: cellid = #xy
      */   
     function calculatePossible(cellid){ 
-        var start = new Date().getMilliseconds();
         //every possible cell related to cellid
         var allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid]];
         
@@ -193,23 +173,46 @@
             possible[cellid].push(i);
           }		
        }
-       var elapsed = new Date().getMilliseconds() - start;
-       console.log("Probabilities calculated in "+elapsed+"ms");
     }
+    
+    /*
+     *  Wrapped for calculatePossible to calculate possible values
+     *  for each relation to a given target cell
+     */
+     function updateRelatedPossible(cellid){
+       
+       var cellid = cellid;
+       var allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid]];
+        
+      //loop over each axis
+      for(var i = 0; i < allRelatedCells.length; i++){
+        //axis we are currently processing
+        var relatedAxis = allRelatedCells[i];        
+        for(var j = 0; j < relatedAxis.length; j++){          
+          // if value is blank 
+          if($(relatedAxis[j]).val() == ""){
+            calculatePossible(relatedAxis[j]);
+            log('updated possible for '+relatedAxis[j]);
+          }          
+        }        
+      }
+     
+       
+     }
     
     /*
      * Solve wrapper when cell clicked
      */
 		function solveThis(){
-       solve('#'+$(this).attr('id'));
+       simpleSolve('#'+$(this).attr('id'));
+       
+       //logic here - we should try cross solve sometimes
     } 
     
     /*
-     *  The meat in this sandwich
+     *  Simple blacklist based solving algorithm
      */
-		function solve(cellid){
-      var start = new Date().getMilliseconds();
-      
+		function simpleSolve(cellid){
       var cellid = cellid;
       var value = $(cellid).val();
       
@@ -225,9 +228,11 @@
           $(cellid).addClass('solved');
           log('x'+cellid[1]+'y'+cellid[2]+' solved. single possibilty remained.');          
           //trigger update to related cells possibles now? 
+          consecutiveFails = 0;
         }
         else{          
-          log(possiblevalues+' possible in x'+cellid[1]+'y'+cellid[2]);
+          //add to counter for failed solve attempts
+          consecutiveFails++;
         }
       }
       else{
@@ -235,24 +240,96 @@
         $(this).addClass('userSolved');			
 				$(this).removeClass('unsolved');
       }
-
-      var elapsed = new Date().getMilliseconds() - start;
-      console.log("Solve attempted in "+elapsed+"ms");
     }
-		
+    
+    /*
+     *  Attempts to solve by comparing possibilities of related cells
+     */
+		function crossPossibilitySolve(cellid){
+        var cellid = cellid;
+        var allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid]];
+        
+        //loop over each axis
+        for(var i = 0; i < allRelatedCells.length; i++){
+          //axis we are currently processing
+          var relatedAxis = allRelatedCells[i];
+          
+          //how many times 1-9 occur in possibles counts[0] is always going to be 0
+          var counts = [0,0,0,0,0,0,0,0,0,0];
+          var cellsInCount = [];
+          
+            //loop over each related cell by axis i
+            for(var j = 0; j < relatedAxis.length; j++){
+            
+              //only want to deal with unsolved fields!             
+              var tmpval = $(relatedAxis[j]).val();              
+              if(tmpval == ""){                
+                //remember who to look through for next time
+                cellsInCount.push(relatedAxis[j]);
+                
+                //we get the possible for current related cell
+                var tmppos = possible[relatedAxis[j]];
+                
+                for(var p = 0; p < tmppos.length; p++){
+                    //add to the count 
+                    counts[tmppos[p]]++;                  
+                }
+              }
+            }         
+
+            //now we have a counts array which contains how many times each p val occured
+            var onlyhere = [];
+            for(var c = 0; c < counts.length; c++){
+              if(counts[c] === 1){                
+                //if one of these is 1 -> we have found a value unique possible value.
+                var uniqueval = c;
+                onlyhere.push(uniqueval);
+              }               
+            }
+            
+            log(counts);
+            log(onlyhere);
+            //we have to make sure that there was only 1 value with 1 pos count 
+            if(onlyhere.length === 1){
+              //if its the only one, it is a true value
+              //loop over related axis again to quickly check if val in possible ->
+              for(var j = 0; j < cellsInCount.length; j++){                    
+                var tmppos = possible[cellsInCount[j]];
+                  if(tmppos.indexOf(onlyhere[0]) > -1){
+                    // found!!!  
+                    var foundcell = cellsInCount[j];
+                    log('x'+foundcell[1]+'y'+foundcell[2]+' solved using cross possibility solve.');
+                    $(foundcell).val(onlyhere[0]);
+                    $(foundcell).removeClass('unsolved');
+                    $(foundcell).addClass('crossSolved');
+                    
+                    //call update to the possible of each blank relation
+                    updateRelatedPossible(cellsInCount[j]);
+                  }
+              }
+            }
+        }
+    }
+    
 		function solveAll(){		
       var start = new Date().getMilliseconds(); 
       
       var unsolved = $(".unsolved").length;
 			var attempts = 0;
+      consecutiveFails = 0;
+      var totalTrys = 0;
       
-			while(unsolved > 0 && attempts < 6){
+			while(unsolved > 0 && consecutiveFails < 81){
         
         //loop over each cellid
         for(var i = 0; i < cellids.length; i++){          
-          solve(cellids[i]);          
-        }      
-				
+          simpleSolve(cellids[i]);
+          totalTrys++;
+          //escape loop
+          if(consecutiveFails > 81)
+            break;
+        }     
+
 				unsolved = $(".unsolved").length;
 				attempts++;
 			}
@@ -260,11 +337,25 @@
       var elapsed = new Date().getMilliseconds() - start;
       
 			if(unsolved === 0){	
-				log("Solve success in: < "+attempts+" board passes. Time taken: "+elapsed+" ms");
+				log("Solve success in: < "+attempts+" board passes. Total solve trys: "+totalTrys+". Time taken: "+elapsed+" ms");
 			}
-			else{
-				log("Solve not completed in "+attempts+" full board passes. Stopped after "+elapsed+" ms");				
-			}	
+      else if(consecutiveFails > 81){
+        log("Too many consecutive fails - entire board pass yielded no new value. Stopped. fails "+consecutiveFails+" passes "+attempts+" remaining "+unsolved);
+        log("Using cross-possibility solve...");
+        
+        //here we should try with a smarter algorithm
+        
+        //start counting fails again
+        consecutiveFails = 0;
+        
+        for(var i = 0; i < cellids.length; i++){          
+          crossPossibilitySolve(cellids[i]); 
+        }
+
+			}
+      else{
+        log("Stopped for some reason... fails: "+consecutiveFails+" remaining: "+unsolved+" board passes"+attempts);
+      } 
 		}
 		
 		function toggleHighlighting(){
@@ -311,7 +402,8 @@
 		}
 	
     function log(message){
-      $('#log').html(message+'<br/>'+$('#log').html()+'');      
+      //$('#log').html(message+'<br/>'+$('#log').html()+'');
+      $('#log').append(message+'<br/>');
     }
     
     function presetJSON(){     
