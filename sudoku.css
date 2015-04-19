@@ -46,25 +46,25 @@ button{
  background: hsla(0, 20%, 0%, 0.30);		
 }
 .c1{
-	background: hsla(0, 20%, 0%, 0.35);	
+	background: hsla(0, 20%, 0%, 0.45);	
 }
 .c2{
 	background: hsla(0, 20%, 0%, 0.30);	
 }
 .c3{
-	background: hsla(0, 20%, 0%, 0.35);
+	background: hsla(0, 20%, 0%, 0.45);
 }
 .c4{
 	background: hsla(0, 20%, 0%, 0.30);	
 }
 .c5{
-	background: hsla(0, 20%, 0%, 0.35);
+	background: hsla(0, 20%, 0%, 0.45);
 }
 .c6{
 	background: hsla(0, 20%, 0%, 0.30);	
 	}
 .c7{
-	background: hsla(0, 20%, 0%, 0.35);
+	background: hsla(0, 20%, 0%, 0.45);
 }
 .c8{
 	background: hsla(0, 20%, 0%, 0.30);	
@@ -103,4 +103,6 @@ button{
 .skipped{
 	background: yellow;
 }
-
+.invalid{
+	background: red;
+}

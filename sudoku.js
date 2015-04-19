@@ -28,8 +28,10 @@
 			//Color
 			$('#toggleColor').click(toggleColor);
 			
-			$('#solveAll').click(solveAll);			
-			
+			$('#solveAll').click(solveAll);	
+      
+			$('#validate').click(validateSolution); 
+      
 			$('.grid').click(solveThis); 
       
       $('#json').click(presetJSON); 
@@ -71,7 +73,7 @@
 		function resetBoard(){
       possible = [];
       $('.grid').val('');
-      $('.grid').removeClass("solved userSolved crossSolved");			
+      $('.grid').removeClass("solved userSolved crossSolved invalid");			
 			$('.grid').addClass("unsolved");
       $('#log').html('');  
 		}
@@ -84,6 +86,7 @@
 		function toggleColor(){
 				$('.grid').toggleClass('noColor');
 		}
+
  
     /*
      * Loop over all cells in idlist and generate relationships based on axis
@@ -174,9 +177,19 @@
           }		
        }
     }
-    
     /*
-     *  Wrapped for calculatePossible to calculate possible values
+     *  Wrapper for calculatePossible to calculate 
+     *  possible values board wide
+     */
+     function calculateAllPossible(){
+       
+       for(var i= 0; i < cellids.length; i++){
+        calculatePossible(cellids[i]);
+       }
+       
+     }
+    /*
+     *  Wrapper for calculatePossible to calculate possible values
      *  for each relation to a given target cell
      */
      function updateRelatedPossible(cellid){
@@ -196,16 +209,14 @@
           }          
         }        
       }
-     
-       
      }
     
     /*
      * Solve wrapper when cell clicked
      */
 		function solveThis(){
+      calculateAllPossible();
        simpleSolve('#'+$(this).attr('id'));
-       
        //logic here - we should try cross solve sometimes
     } 
     
@@ -227,12 +238,12 @@
           $(cellid).removeClass('unsolved');
           $(cellid).addClass('solved');
           log('x'+cellid[1]+'y'+cellid[2]+' solved. single possibilty remained.');          
-          //trigger update to related cells possibles now? 
-          consecutiveFails = 0;
+          //trigger update to related cells possibles now?
+          calculateAllPossible();
         }
         else{          
           //add to counter for failed solve attempts
-          consecutiveFails++;
+          consecutiveFails++;          
         }
       }
       else{
@@ -244,8 +255,15 @@
     
     /*
      *  Attempts to solve by comparing possibilities of related cells
+     *  aka hidden singles
      */
 		function crossPossibilitySolve(cellid){
+      
+        //debugging aid
+        $(cellid).addClass('invalid');
+      
+      
+        calculateAllPossible();
         var cellid = cellid;
         var allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid]];
         
@@ -286,9 +304,6 @@
                 onlyhere.push(uniqueval);
               }               
             }
-            
-            log(counts);
-            log(onlyhere);
             //we have to make sure that there was only 1 value with 1 pos count 
             if(onlyhere.length === 1){
               //if its the only one, it is a true value
@@ -299,16 +314,29 @@
                     // found!!!  
                     var foundcell = cellsInCount[j];
                     log('x'+foundcell[1]+'y'+foundcell[2]+' solved using cross possibility solve.');
+                    log(counts);
+                    log(onlyhere);
+                    log(uniqueval);
+                    if(i === 0)
+                      log('on x');
+                    if(i === 1)
+                      log('on y');
+                    if(i === 2)
+                      log('on c');
+                    log("-----------")
                     $(foundcell).val(onlyhere[0]);
                     $(foundcell).removeClass('unsolved');
                     $(foundcell).addClass('crossSolved');
                     
                     //call update to the possible of each blank relation
-                    updateRelatedPossible(cellsInCount[j]);
+                    //updateRelatedPossible(cellsInCount[j]);
+                    calculateAllPossible();
                   }
               }
             }
         }
+                //debugging aid
+        $(cellid).removeClass('invalid');
     }
     
 		function solveAll(){		
@@ -319,14 +347,14 @@
       consecutiveFails = 0;
       var totalTrys = 0;
       
-			while(unsolved > 0 && consecutiveFails < 81){
+			while(unsolved > 0 && consecutiveFails < 192){
         
         //loop over each cellid
         for(var i = 0; i < cellids.length; i++){          
           simpleSolve(cellids[i]);
           totalTrys++;
           //escape loop
-          if(consecutiveFails > 81)
+          if(consecutiveFails > 192)
             break;
         }     
 
@@ -339,7 +367,7 @@
 			if(unsolved === 0){	
 				log("Solve success in: < "+attempts+" board passes. Total solve trys: "+totalTrys+". Time taken: "+elapsed+" ms");
 			}
-      else if(consecutiveFails > 81){
+      else if(consecutiveFails > 192){
         log("Too many consecutive fails - entire board pass yielded no new value. Stopped. fails "+consecutiveFails+" passes "+attempts+" remaining "+unsolved);
         log("Using cross-possibility solve...");
         
@@ -357,6 +385,47 @@
         log("Stopped for some reason... fails: "+consecutiveFails+" remaining: "+unsolved+" board passes"+attempts);
       } 
 		}
+    
+    function validateSolution(){      
+      //loop over each axis and make sure there is 1-9 in each and every cell      
+      var axis = ['x','y','c'];
+      var failed = false;
+      //each axis
+      for(var ax = 0; ax < axis.length; ax++){
+        
+        log("Validating groupings by "+axis[ax]);
+        var axisid = axis[ax];  
+        
+        //each axis has 9 cell groups
+        for(var i = 0; i < 10; i++){
+          //current grouping 
+          var currentgp = axisid+''+i;
+          
+          //tracks out numbers
+          var sum = 0;
+          var vals = [];
+          $('.'+currentgp).each(function(){            
+            var val = $(this).val();            
+            if(vals[val] == undefined){
+              //its not there yet so throw it in
+              vals[val] = val;
+            }
+            else{
+              //already found, therefore failed
+              failed = true;
+              log("Group "+currentgp+" FAILED");  
+              $('.'+currentgp).addClass("invalid");
+            }
+          });
+        }
+      }
+      if(failed){
+       log("Validation failed! You suck!!"); 
+      }
+      else{
+        log("Congratulation. Solution was valid!");
+      }
+    }
 		
 		function toggleHighlighting(){
 			if( highlight == 1){		
