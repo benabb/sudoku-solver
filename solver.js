@@ -71,14 +71,7 @@ function solve(request){
       val = cellvals[cellids[i]];
       //only solve unsolved cells
       if(val == 0){
-
-      
-               
-          simpleSolve(cellids[i]);        
-        
-        
-        
-        
+          simpleSolve(cellids[i]); 
       }
     }
     solveTrys++;
@@ -87,6 +80,21 @@ function solve(request){
   
   var elapsed = new Date().getMilliseconds() - start;
   console.log("Finished in "+elapsed+" ms");
+  
+  unsolved = 0;
+  for(i = 0; i < cellids.length; i++){
+    if(cellvals[cellids[i]] == 0){
+      unsolved++;
+    }
+  }
+  if(unsolved === 0){
+    log("Solved successfully in: "+elapsed+" ms. Hooray!");
+  }else{
+    percent = Math.round((unsolved / 81) * 100);
+    
+    log("Solve attempt finished in: "+elapsed+" ms. "+unsolved+" cells ("+percent+"%) remaining");
+  }
+  
   solveTrys = 0;
 }
 /*
@@ -259,6 +267,11 @@ validate = function(){
   }  
   var timerElapsed = new Date().getMilliseconds() - timerStart;
   console.log("Finished Validating in:" + timerElapsed+ " ms");  
+}
+
+log = function(msg){
+  var message = ['logMessage', msg];
+  postMessage(message);
 }
 function pausecomp(millis)
  {

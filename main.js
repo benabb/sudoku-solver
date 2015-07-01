@@ -63,7 +63,9 @@ if (!!window.Worker) {
       delete(cellVal);
     }
     else if(response[0] === 'logMessage'){
-      
+      msg = "<p>"+ response[1] +"</p>";
+      log = $('#log').html();
+      $('#log').html(msg+=log);
     }
     else{
       alert(e.data);

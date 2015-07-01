@@ -109,7 +109,17 @@ select{
   padding: 5px;
   text-decoration: none;
 }
-
+#log{
+  width: 360px;
+  height: 90px;
+  font-size: 18px;
+  padding: 5px;
+  margin-left: 5px;
+  background-color: #4e443c;
+  border: 1px solid #FF931E;
+  color: #f4b576; 
+  overflow-y: scroll;
+}
 #other{
   display: none;
 }
