@@ -3,10 +3,15 @@
   <title> Sudoku Solver </title>
 	<link rel="stylesheet" href="sudoku.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <script src="sudoku.js"></script>
+ <link href='http://fonts.googleapis.com/css?family=BenchNine' rel='stylesheet' type='text/css'><script src="main.js"></script>
 </head>
 <body>
-<div class="popup"> </div>
+<div class="wrapper">
+  <header>
+    <h1> SUDOKU SOLVER</h1>
+    <h2>IN JAVASCRIPT USING HTML5 WEB WORKERS</h2>
+    <h3><a href="https://github.com/benabb/sudoku-solver">SOURCE (MIT)</a><h3>
+  </header>
 	<div id="board">	
     <input class="grid unsolved c0 y0 x0" type="text" id="00" data-cluster="0" data-x="0" data-y="0">
     <input class="grid unsolved c0 y0 x1" type="text" id="10" data-cluster="0" data-x="1" data-y="0">
@@ -91,26 +96,20 @@
     <input class="grid unsolved c8 y8 x8" type="text" id="88" data-cluster="8" data-x="8" data-y="8">
 	</div>
 	<div id="console">
-    <h1> Sudoku Solver</h1>
-    <p> Click a cell to try solve it. </p>
-		<button id="solveAll">Auto Solve</button> 
-		<br />
-    Preset: 
-		<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select> <button id="preset">Load Preset</button> 
-    <br />	
-    <button id="resetBoard">Reset Board</button>
-		<br />		
-		<br />		
-		<hr />
-		<h3> Utilities </h3>
-    <button id="validate">Validate Solution</button>		
-		<br />
-		<button id="toggleHighlight">Highlighting</button>		
-		<br />
-		<button id="toggleColor">Toggle Color</button>  
-     <br />
-    <button id="json" title="Makes a json preset from current board data">make preset from current board</button>       
+    <p>1 - Load a board preset</p> 
+		<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select> <button id="preset">Load Preset</button> <button id="resetBoard">Reset Board</button>
+    <hr />    
+    <p>2 - Solve it!</p>
+    <button id="solveAll">Auto Solve</button> <button id="simpleSolve">Simple Solve</button> 
+		<hr />  	
+    <p>3 - Does this thing really work?</p>
+    <button id="validate">Validate Solution</button>	
+    <hr />  
+    <!-- p id="more">More</p -->
+    <div id="other">
+    <button id="json" title="Makes a json preset from current board data">Make Preset JSON</button>  
+    </div>
 	</div>
-<div id="log"></div>
+</div>
 </body>
 </html>
