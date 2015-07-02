@@ -130,21 +130,17 @@ hr{
   border-bottom: 1px solid #ccc;
   clear: both;
 }
+.presetSolved{
+	background: #ccc;
+	color: #000;
+}
 .solved{
 	background: green;
 	color: black;
 }
-.crossSolved{
+.hiddenSingle{
 	background: limegreen;
 	color: black;
-}
-.highlight{
-	background: black;
-	color: white;
-}
-.presetSolved{
-	background: #ccc;
-	color: #000;
 }
 .userSolved{
 	background: #cec;  

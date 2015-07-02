@@ -3,6 +3,7 @@ $(document).ready(function(){
 var grid = document.querySelectorAll('.grid');
 var solveButton = document.querySelector('#solveAll');
 var simpleSolveButton = document.querySelector('#simpleSolve');
+var hiddenSinglesButton = document.querySelector('#hiddenSingles');
 var reset = document.querySelector('#resetBoard');
 var validate = document.querySelector('#validate');
 
@@ -24,6 +25,9 @@ if (!!window.Worker) {
   
 	simpleSolveButton.onclick = function() {
     solver.postMessage(['simpleSolve']);	  
+	}  
+  hiddenSinglesButton.onclick = function() {
+    solver.postMessage(['hiddenSingles']);	  
 	}  
   /* Reset and Load New */
   reset.onclick = function(){

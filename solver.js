@@ -42,6 +42,9 @@ onmessage = function(e) {
   if(task === 'simpleSolve'){
     simpleSolveAll();
   }
+  if(task === 'hiddenSingles'){
+    hiddenSinglesAll();
+  }
   if(task === 'checkSolution'){ 
     validate();
   }
@@ -61,6 +64,7 @@ onmessage = function(e) {
  */
 var solveTrys = 0;
 var lastAlgorithm = 'simple'; 
+var solveDifficulty = 0;
 function solve(request){
   var start = new Date().getMilliseconds();
   //begin by updating possibles
@@ -71,12 +75,21 @@ function solve(request){
       val = cellvals[cellids[i]];
       //only solve unsolved cells
       if(val == 0){
+        if(solveDifficulty == 0){          
           simpleSolve(cellids[i]); 
+        } 
+        if(solveDifficulty == 1){
+          hiddenSinglesSolve(cellids[i]);
+        }
+        if(solveDifficulty > 2){
+          break;
+        }
       }
-    }
+    }    
+    solveDifficulty++;
     solveTrys++;
+    
   }
-  
   
   var elapsed = new Date().getMilliseconds() - start;
   console.log("Finished in "+elapsed+" ms");
@@ -88,13 +101,14 @@ function solve(request){
     }
   }
   if(unsolved === 0){
-    log("Solved successfully in: "+elapsed+" ms. Hooray!");
+    log("Solved in: "+elapsed+" ms. Hooray!");
   }else{
-    percent = Math.round((unsolved / 81) * 100);
-    
+    percent = Math.round((unsolved / 81) * 100);   
     log("Solve attempt finished in: "+elapsed+" ms. "+unsolved+" cells ("+percent+"%) remaining");
-  }
-  
+    log("Solution too hard! (for now)"); 
+     
+  }  
+  log("<hr />");
   solveTrys = 0;
 }
 /*
@@ -129,7 +143,6 @@ calculatePossible = function(cellid){
       possible[cellid].push(i);
     }
   } 
-  //console.log(blacklist + " means these are possible: "+ possible[cellid]);
 }  
 /*
  *  Wrapper for calculatePossible to calculate 
@@ -148,8 +161,7 @@ function calculateAllPossible() {
 simpleSolve = function(cellid){  
   cellpossible = possible[cellid];  
   if(cellpossible.length == 1 && cellpossible[0] != 0){
-    returnSolution(cellid, cellpossible[0], 'solved');
-    
+    returnSolution(cellid, cellpossible[0], 'solved');    
     //solved a solution so we should update;
     calculateAllPossible();
   }
@@ -159,6 +171,7 @@ simpleSolve = function(cellid){
  *  simpleSolve on each cell
  */
 function simpleSolveAll() {
+  var timerStart = new Date().getMilliseconds();
   calculateAllPossible();
   for(i = 0; i < cellids.length; i++){
     val = cellvals[cellids[i]];
@@ -166,10 +179,88 @@ function simpleSolveAll() {
       simpleSolve(cellids[i]);
     }
   }
+  var timerElapsed = new Date().getMilliseconds() - timerStart;
+  console.log('Simple Solve (Last Candidate) Pass done in: '+timerElapsed+" ms");
+}
+/*
+ *  Attempts candidate elimination by comparing possibilities of related cells
+ *  for a hidden unique value - AKA 'hidden singles'
+ */
+hiddenSinglesSolve = function(cellid) {
+  calculateAllPossible();  
+  allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid]];
+  //loop over each axis
+  for (var i = 0; i < allRelatedCells.length; i++) {
+    var relatedAxis = allRelatedCells[i];
+    var counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    var cellsInCount = [];
+
+    //Remember to use own cell value in elimination
+    if (cellvals[cellid] == "") {
+      cellsInCount.push(cellid);
+      var tmppos = possible[cellid];
+      for (var p = 0; p < tmppos.length; p++) {
+        //add to the count 
+        counts[tmppos[p]]++;
+      }
+    }
+
+    //loop over each related cell by axis i
+    for (var j = 0; j < relatedAxis.length; j++) {            
+      var tmpval = cellvals[relatedAxis[j]];
+      if (tmpval == "") {
+        //remember who to look through for next time
+        cellsInCount.push(relatedAxis[j]);
+        //we get the possible for current related cell
+        var tmppos = possible[relatedAxis[j]];
+        for (var p = 0; p < tmppos.length; p++) {
+          //add to the count 
+          counts[tmppos[p]]++;
+        }
+      }
+    }
+    //now we have a counts array which contains how many times each p val occured
+    var onlyhere = [];
+    for (var c = 0; c < counts.length; c++) {
+      if (counts[c] === 1) {
+        //if one of these is 1 -> we have found a value unique possible value.
+        var uniqueval = c;
+        onlyhere.push(uniqueval);
+      }
+    }
+    //we have to make sure that there was only 1 value with 1 pos count 
+    if (onlyhere.length === 1) {
+      //if its the only one, it is a true value
+      //loop over related axis again to quickly check if val in possible ->
+      for (var j = 0; j < cellsInCount.length; j++) {
+        var tmppos = possible[cellsInCount[j]];
+        if (tmppos.indexOf(onlyhere[0]) > -1) {
+          // found!!!  
+          var foundcell = cellsInCount[j];          
+          returnSolution('#'+foundcell[1]+""+foundcell[2],onlyhere[0],'hiddenSingle');
+          calculateAllPossible();
+        }
+      }
+    }
+  }
 }
 
+function hiddenSinglesAll() {
+  var timerStart = new Date().getMilliseconds();
+  calculateAllPossible();
+  for(i = 0; i < cellids.length; i++){
+    val = cellvals[cellids[i]];
+    if(val == 0){
+      hiddenSinglesSolve(cellids[i]);
+    }
+  }
+  var timerElapsed = new Date().getMilliseconds() - timerStart;
+  log('Hidden Single Pass done in: '+timerElapsed+" ms");
+}
+
+
 /*
- * returnSolution('#cellid', 'solution'):
+ * returnSolution('#cellid', 'solution', type):
  * posts back each cell's solution and the corresponding 
  * DOM id, should also update programatic grid
  */
@@ -183,7 +274,9 @@ returnSolution = function(cellid, solution, solveType){
   setCellValue(cellid, solution);
   
   //keep looping
-  solveTrys = 0;
+  solveTrys = 0;  
+  //use the simple algorithm again
+  solveDifficulty = 0;
 }
 
 /*
@@ -237,6 +330,7 @@ loadRandomBoard = function(){
     var tmpcell = cells[key];
     returnSolution('#'+tmpcell[0]+''+tmpcell[1], tmpcell[2], ' presetSolved');
   }
+  log(difficulty+' board loaded');
 }
 /*
  *  Validate the current solution
@@ -246,33 +340,69 @@ validate = function(){
   // check if there is only 1 - 9 in each set
   // else flag set as error 
   related = [relatedCellsX, relatedCellsY, relatedCellsC];
-
   //array to count numbers occuring
   count = [];
   for(i = 0; i < 10; i++){
     count[i] = 0;
-  }
-
+  }  
+  //broken cells
+  invalid = false;
   // loop over each set of related cells
   for(var i = 0; i < related.length; i++){   
     // and each related cell  
     current = related[i];
-    console.log("Current: "+i);
-    for(var k = 0; k < cellids.length; k++){      
-      
-      console.log("Related to: "+cellids[k]+" = "+current[cellids[k]]);
-      
-      
-    }  
-  }  
+    for(var k = 0; k < cellids.length; k++){ 
+      //console.log("Related to: "+cellids[k]+" = "+current[cellids[k]]);
+      currentid = cellids[k];      
+      //count the cell we are on's value too
+      if(cellvals[currentid] == ''){
+        count[0]++;
+        invalid = true; 
+        break;
+      }else{
+        count[cellvals[currentid]]++;
+      }
+      relatedToCurrent = current[cellids[k]];      
+      for(var val = 0; val < relatedToCurrent.length; val++){   
+        relatedId = relatedToCurrent[val];        
+        if(cellvals[relatedId] == ''){
+          count[0]++;
+          invalid = true;
+          break;
+        }
+        else{
+          count[cellvals[relatedId]]++;
+        }
+      }      
+      if(count[0] != 0){
+        count[0] = 0;
+        invalid = true;
+        break;
+      }
+      for(var i = 1; i < 10; i++){        
+        if(count[i] == 0){
+          invalid = true; 
+        }
+        if(count[i] > 1){
+          invalid = true;          
+        }        
+        count[i] = 0;
+      }
+    }
+  }
   var timerElapsed = new Date().getMilliseconds() - timerStart;
-  console.log("Finished Validating in:" + timerElapsed+ " ms");  
+  if(invalid){
+    log("Invalid Solution! Validated in " + timerElapsed+ "ms");
+  }else{
+    log("Valid Solution! Validated in " + timerElapsed+ "ms");
+  }  
 }
 
 log = function(msg){
   var message = ['logMessage', msg];
   postMessage(message);
 }
+
 function pausecomp(millis)
  {
   var date = new Date();
