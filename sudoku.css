@@ -50,20 +50,45 @@ margin-top: -0.4em;
 	height: 396px;
 	float: left;
 	margin: 0em;
-  border: 3px solid #4e443c;
   border: 3px solid #444444;
 }
 .grid{
-	width: 44px;
-	height: 44px;	
+	width: 42px;
+	height: 42px;	
 	float:left;	
 	border: 1px solid #4e443c;
   margin: 0;
   padding:0;
   display: inline-block;
-  text-align:center;  
-  
+  text-align:center;
   font-size: 1em;
+}
+
+#possibleBoard{
+  border: 3px solid #444444;
+	width: 396px;
+	height: 396px;
+  position: fixed;
+  display:none; 
+  float: left;
+	margin: 0em;
+  background: none;
+}
+#possibleBoard p{
+	width: 44px;
+	height: 44px;	
+	float:left;	
+  margin: 0;
+  padding:0;
+  display: inline-block;
+  text-align:center;
+  font-size: 0.7em;
+  line-height: 1.2em;
+  overflow: hidden;  
+  background:white;
+  opacity: 0.6;
+  color: black;
+  border: none;
 }
 #console{
 	width: 380px;
@@ -149,4 +174,3 @@ hr{
 .invalid{
 	background: red;
 }
-

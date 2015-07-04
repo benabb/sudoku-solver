@@ -27,28 +27,32 @@ onmessage = function(e) {
   task = request[0];
   if(task === 'loadBoard'){
     difficulty = request[1];
-    loadRandomBoard(difficulty);
+    loadRandomBoard(difficulty);    
   }
   
   if(task === 'resetBoard'){
     resetBoard();
   }
   if(task === 'setCellValue'){
-    returnSolution('#'+request[1]+''+request[2], request[3], 'userSolved');
+    returnSolution(request[1], request[2], 'userSolved');
+    updateDOMPossible();
   }
   if(task === 'tryFullSolve'){
     solve();
+    updateDOMPossible();
   }
   if(task === 'simpleSolve'){
     simpleSolveAll();
+    updateDOMPossible();
   }
   if(task === 'hiddenSingles'){
     hiddenSinglesAll();
+    updateDOMPossible();
   }
   if(task === 'checkSolution'){ 
     validate();
   }
-  if(task === 'setRelated'){    
+  if(task === 'setRelated'){ 
     relatedCellsX = request[1];
     relatedCellsY = request[2];
     relatedCellsC = request[3];
@@ -87,8 +91,7 @@ function solve(request){
       }
     }    
     solveDifficulty++;
-    solveTrys++;
-    
+    solveTrys++;    
   }
   
   var elapsed = new Date().getMilliseconds() - start;
@@ -100,60 +103,74 @@ function solve(request){
       unsolved++;
     }
   }
-  if(unsolved === 0){
+  if(unsolved === 0){    
+    validate();
     log("Solved in: "+elapsed+" ms. Hooray!");
   }else{
     percent = Math.round((unsolved / 81) * 100);   
     log("Solve attempt finished in: "+elapsed+" ms. "+unsolved+" cells ("+percent+"%) remaining");
     log("Solution too hard! (for now)"); 
      
-  }  
-  log("<hr />");
+  }    
   solveTrys = 0;
 }
 /*
  * Solving Algorithms:
  */
- 
 /*
  *  Updates possible array with values for a given cell
  */
 calculatePossible = function(cellid){
-  //every possible cell related to cellid
-  var allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid] ];
-  //work out blacklist by checking for values in related cells
-  var blacklist = [];
-  for (var i = 0; i < allRelatedCells.length; i++) {
-    var relatedAxis = allRelatedCells[i];    
-    for (var j = 0; j < relatedAxis.length; j++) {
-      var tmpcell = relatedAxis[j];      
-      var tmpval = cellvals[tmpcell];      
-      if (tmpval != 0) {
-        blacklist.push(tmpval);
+  if(cellvals[cellid] != 0){
+    //Cell is filled, therefore the filled value is the only one possible!
+    possible[cellid] = [];
+    possible[cellid].push(cellvals[cellid]);
+  }
+  else{    
+    //every possible cell related to cellid
+    var allRelatedCells = [relatedCellsX[cellid], relatedCellsY[cellid], relatedCellsC[cellid] ];
+    //work out blacklist by checking for values in related cells
+    var blacklist = [];
+    for (var i = 0; i < allRelatedCells.length; i++) {
+      var relatedAxis = allRelatedCells[i];    
+      for (var j = 0; j < relatedAxis.length; j++) {
+        var tmpcell = relatedAxis[j];      
+        var tmpval = cellvals[tmpcell];      
+        if (tmpval != 0) {
+          blacklist.push(tmpval);
+        }
+      }
+    }  
+    //update possible values
+    possible[cellid] = [];
+    //loop over blacklist and test with numbers 1-9
+    for (var i = 1; i < 10; i++) {
+      var blacklisted = blacklist.indexOf(i) > -1;
+      if (blacklisted === false) {
+        //not in blacklist - add to possible array
+        possible[cellid].push(i);
       }
     }
-  }  
-  //update possible values
-  possible[cellid] = [];
-  //loop over blacklist and test with numbers 1-9
-  for (var i = 1; i < 10; i++) {
-    var blacklisted = blacklist.indexOf(i) > -1;
-    if (blacklisted === false) {
-      //not in blacklist - add to possible array
-      possible[cellid].push(i);
-    }
-  } 
+  }
 }  
 /*
  *  Wrapper for calculatePossible to calculate 
  *  possible values board wide
  */
-function calculateAllPossible() {
+calculateAllPossible = function() {
   for (var i = 0; i < cellids.length; i++) {
     calculatePossible(cellids[i]);
   }
 }
 
+updateDOMPossible = function(){
+  for (var i = 0; i < cellids.length; i++) {
+    var cellinfo = ['#p'+cellids[i].split('#')[1], possible[cellids[i]]];
+    var message = ['updatePossibleOverlay', cellinfo];
+    postMessage(message); 
+  }
+  
+}
 /*
  *  Simple Solve aka Single Candidate
  *  when only one possible value remains
@@ -170,7 +187,7 @@ simpleSolve = function(cellid){
  *  Wrapper for simpleSolve to run 
  *  simpleSolve on each cell
  */
-function simpleSolveAll() {
+simpleSolveAll = function() {
   var timerStart = new Date().getMilliseconds();
   calculateAllPossible();
   for(i = 0; i < cellids.length; i++){
@@ -180,7 +197,7 @@ function simpleSolveAll() {
     }
   }
   var timerElapsed = new Date().getMilliseconds() - timerStart;
-  console.log('Simple Solve (Last Candidate) Pass done in: '+timerElapsed+" ms");
+  log('Simple Solve (Last Candidate) pass done in: '+timerElapsed+" ms");
 }
 /*
  *  Attempts candidate elimination by comparing possibilities of related cells
@@ -255,7 +272,7 @@ function hiddenSinglesAll() {
     }
   }
   var timerElapsed = new Date().getMilliseconds() - timerStart;
-  log('Hidden Single Pass done in: '+timerElapsed+" ms");
+  log('Hidden Singles candidate elimination done in: '+timerElapsed+" ms");
 }
 
 
@@ -264,7 +281,7 @@ function hiddenSinglesAll() {
  * posts back each cell's solution and the corresponding 
  * DOM id, should also update programatic grid
  */
-returnSolution = function(cellid, solution, solveType){  
+returnSolution = function(cellid, solution, solveType){ 
   //return to dom
   var cellinfo = [cellid.split('#')[1], solution, solveType];
   var message = ['updateCellDom', cellinfo];
@@ -276,7 +293,7 @@ returnSolution = function(cellid, solution, solveType){
   //keep looping
   solveTrys = 0;  
   //use the simple algorithm again
-  solveDifficulty = 0;
+  solveDifficulty = 0;  
 }
 
 /*
@@ -285,23 +302,28 @@ returnSolution = function(cellid, solution, solveType){
  * changed in DOM. 
  */
 setCellValue = function(cellid, val){
-  cellvals[cellid] = val;  
+  if(val === ''){
+    val = 0;
+  } 
+  intval = parseInt(val);
+  cellvals[cellid] = intval;  
 }
 
+/*
+ *  Clears board in solver and DOM
+ */
 resetBoard = function(){
   //clear the possibles for each cell 
   for (var i = 0; i < cellids.length; i++) {
     possible[cellids[i]] = [];
   }
-  //clear known cell values
-  for (var i = 0; i < cellids.length; i++) {
-    cellvals[cellids[i]] = 0;
-  } 
   //reflect changes in dom
-    for (var i = 0; i < cellids.length; i++) {
+  for (var i = 0; i < cellids.length; i++) {
     returnSolution(cellids[i], '', 'unsolved');
   }
+  log("<br />");
 }
+
 /*
  *  Load a random board given a difficulty
  *  from json file of preset boards
@@ -329,8 +351,10 @@ loadRandomBoard = function(){
   for (var key in cells) {
     var tmpcell = cells[key];
     returnSolution('#'+tmpcell[0]+''+tmpcell[1], tmpcell[2], ' presetSolved');
+    possible['#'+tmpcell] = parseInt(tmpcell[2]);
   }
-  log(difficulty+' board loaded');
+  calculateAllPossible();
+  updateDOMPossible();  
 }
 /*
  *  Validate the current solution
@@ -355,8 +379,8 @@ validate = function(){
       //console.log("Related to: "+cellids[k]+" = "+current[cellids[k]]);
       currentid = cellids[k];      
       //count the cell we are on's value too
-      if(cellvals[currentid] == ''){
-        count[0]++;
+      if(cellvals[currentid] == 0){
+        //count[0]++;
         invalid = true; 
         break;
       }else{
@@ -403,6 +427,7 @@ log = function(msg){
   postMessage(message);
 }
 
+//function for generating artificial delay
 function pausecomp(millis)
  {
   var date = new Date();

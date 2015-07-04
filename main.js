@@ -10,14 +10,23 @@ var validate = document.querySelector('#validate');
 var difficulty = document.querySelector('#difficulty');
 var preset = document.querySelector('#preset');
 
+$('#20, #21, #22, #23, #24, #25, #26, #27, #28, #50, #51, #52, #53, #54, #55, #56, #57,#58').css('border-right', '1px solid #FF931E');
+$('#30, #31, #32, #33, #34, #35, #36, #37, #38, #60, #61, #62, #63, #64, #65, #66, #67,#68').css('border-left', '1px solid #FF931E');
+$('#02, #12, #22, #32, #42, #52, #62, #72, #82, #05, #15, #25, #35, #45, #55, #65, #75, #85').css('border-bottom', '1px solid #FF931E');
+$('#03, #13, #23, #33, #43, #53, #63, #73, #83, #06, #16, #26, #36, #46, #56, #66, #76, #86').css('border-top', '1px solid #FF931E');
+
 if (!!window.Worker) {
   //initialize the worker and page
 	var solver = new Worker("solver.js");
   calculateRelations();
   loadBoard();
   $('.grid').keyup(function(){
-    solver.postMessage(['setCellValue', this.id[0], this.id[1], this.value]);    
+    solver.postMessage(['setCellValue', '#'+this.id, this.value]);    
   });
+  $('#possible').click(function(){
+    $('#possibleBoard').toggle(0);
+  });
+  
   /* The big red button */
 	solveButton.onclick = function() {
     solver.postMessage(['tryFullSolve']);	  
@@ -70,6 +79,12 @@ if (!!window.Worker) {
       msg = "<p>"+ response[1] +"</p>";
       log = $('#log').html();
       $('#log').html(msg+=log);
+    }
+    else if(response[0] === 'updatePossibleOverlay'){
+        cellinfo = response[1];
+        cellposid = cellinfo[0];
+        cellpos = cellinfo[1];
+        $(cellposid).html(cellpos); 
     }
     else{
       alert(e.data);

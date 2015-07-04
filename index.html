@@ -1,16 +1,17 @@
+<!DOCTYPE html>
 <html>
 <head> 
   <title> Sudoku Solver </title>
 	<link rel="stylesheet" href="sudoku.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
- <link href='http://fonts.googleapis.com/css?family=BenchNine' rel='stylesheet' type='text/css'><script src="main.js"></script>
+  <link href='http://fonts.googleapis.com/css?family=BenchNine' rel='stylesheet' type='text/css'><script src="main.js"></script>
 </head>
 <body>
 <div class="wrapper">
   <header>
     <h1> SUDOKU SOLVER</h1>
     <h2>IN JAVASCRIPT USING HTML5 WEB WORKERS</h2>
-    <h3><a href="https://github.com/benabb/sudoku-solver">SOURCE (MIT)</a><h3>
+    <h3><a href="https://github.com/benabb/sudoku-solver">SOURCE (MIT)</a></h3>
   </header>
 	<div id="board">	
     <input class="grid unsolved c0 y0 x0" type="text" id="00" data-cluster="0" data-x="0" data-y="0">
@@ -93,8 +94,8 @@
     <input class="grid unsolved c7 y8 x5" type="text" id="58" data-cluster="7" data-x="5" data-y="8">
     <input class="grid unsolved c8 y8 x6" type="text" id="68" data-cluster="8" data-x="6" data-y="8">
     <input class="grid unsolved c8 y8 x7" type="text" id="78" data-cluster="8" data-x="7" data-y="8">
-    <input class="grid unsolved c8 y8 x8" type="text" id="88" data-cluster="8" data-x="8" data-y="8">
-	</div>
+    <input class="grid unsolved c8 y8 x8" type="text" id="88" data-cluster="8" data-x="8" data-y="8">  
+	</div>  
 	<div id="console">
     <p>1 - Load a board preset</p> 
 		<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select> <button id="preset">Load Preset</button> <button id="resetBoard">Reset Board</button>
@@ -103,7 +104,7 @@
     <button id="solveAll">Auto Solve</button> <button id="simpleSolve">Simple Solve</button> <button id="hiddenSingles">Hidden Singles</button> 
 		<hr />  	
     <p>3 - Does this thing really work?</p>
-    <button id="validate">Validate Solution</button>	
+    <button id="validate">Validate Solution</button><button id="possible">Show Possible</button>	
     <hr />  
     <div id="log">    
     </div>
@@ -111,6 +112,91 @@
     <div id="other">
     <button id="json" title="Makes a json preset from current board data">Make Preset JSON</button>  
     </div>
+	</div>
+  
+  <!-- Overlays -->
+  <div id="possibleBoard">	
+    <p class="unsolved c0 y0 x0" id="p00">
+    <p class="unsolved c0 y0 x1" id="p10">
+    <p class="unsolved c0 y0 x2" id="p20">
+    <p class="unsolved c1 y0 x3" id="p30">
+    <p class="unsolved c1 y0 x4" id="p40">
+    <p class="unsolved c1 y0 x5" id="p50">
+    <p class="unsolved c2 y0 x6" id="p60">
+    <p class="unsolved c2 y0 x7" id="p70">
+    <p class="unsolved c2 y0 x8" id="p80">
+    <p class="unsolved c0 y1 x0" id="p01">
+    <p class="unsolved c0 y1 x1" id="p11">
+    <p class="unsolved c0 y1 x2" id="p21">
+    <p class="unsolved c1 y1 x3" id="p31">
+    <p class="unsolved c1 y1 x4" id="p41">
+    <p class="unsolved c1 y1 x5" id="p51">
+    <p class="unsolved c2 y1 x6" id="p61">
+    <p class="unsolved c2 y1 x7" id="p71">
+    <p class="unsolved c2 y1 x8" id="p81">
+    <p class="unsolved c0 y2 x0" id="p02">
+    <p class="unsolved c0 y2 x1" id="p12">
+    <p class="unsolved c0 y2 x2" id="p22">
+    <p class="unsolved c1 y2 x3" id="p32">
+    <p class="unsolved c1 y2 x4" id="p42">
+    <p class="unsolved c1 y2 x5" id="p52">
+    <p class="unsolved c2 y2 x6" id="p62">
+    <p class="unsolved c2 y2 x7" id="p72">
+    <p class="unsolved c2 y2 x8" id="p82">
+    <p class="unsolved c3 y3 x0" id="p03">
+    <p class="unsolved c3 y3 x1" id="p13">
+    <p class="unsolved c3 y3 x2" id="p23">
+    <p class="unsolved c4 y3 x3" id="p33">
+    <p class="unsolved c4 y3 x4" id="p43">
+    <p class="unsolved c4 y3 x5" id="p53">
+    <p class="unsolved c5 y3 x6" id="p63">
+    <p class="unsolved c5 y3 x7" id="p73">
+    <p class="unsolved c5 y3 x8" id="p83">
+    <p class="unsolved c3 y4 x0" id="p04">
+    <p class="unsolved c3 y4 x1" id="p14">
+    <p class="unsolved c3 y4 x2" id="p24">
+    <p class="unsolved c4 y4 x3" id="p34">
+    <p class="unsolved c4 y4 x4" id="p44">
+    <p class="unsolved c4 y4 x5" id="p54">
+    <p class="unsolved c5 y4 x6" id="p64">
+    <p class="unsolved c5 y4 x7" id="p74">
+    <p class="unsolved c5 y4 x8" id="p84">
+    <p class="unsolved c3 y5 x0" id="p05">
+    <p class="unsolved c3 y5 x1" id="p15">
+    <p class="unsolved c3 y5 x2" id="p25">
+    <p class="unsolved c4 y5 x3" id="p35">
+    <p class="unsolved c4 y5 x4" id="p45">
+    <p class="unsolved c4 y5 x5" id="p55">
+    <p class="unsolved c5 y5 x6" id="p65">
+    <p class="unsolved c5 y5 x7" id="p75">
+    <p class="unsolved c5 y5 x8" id="p85">
+    <p class="unsolved c6 y6 x0" id="p06">
+    <p class="unsolved c6 y6 x1" id="p16">
+    <p class="unsolved c6 y6 x2" id="p26">
+    <p class="unsolved c7 y6 x3" id="p36">
+    <p class="unsolved c7 y6 x4" id="p46">
+    <p class="unsolved c7 y6 x5" id="p56">
+    <p class="unsolved c8 y6 x6" id="p66">
+    <p class="unsolved c8 y6 x7" id="p76">
+    <p class="unsolved c8 y6 x8" id="p86">
+    <p class="unsolved c6 y7 x0" id="p07">
+    <p class="unsolved c6 y7 x1" id="p17">
+    <p class="unsolved c6 y7 x2" id="p27">
+    <p class="unsolved c7 y7 x3" id="p37">
+    <p class="unsolved c7 y7 x4" id="p47">
+    <p class="unsolved c7 y7 x5" id="p57">
+    <p class="unsolved c8 y7 x6" id="p67">
+    <p class="unsolved c8 y7 x7" id="p77">
+    <p class="unsolved c8 y7 x8" id="p87">
+    <p class="unsolved c6 y8 x0" id="p08">
+    <p class="unsolved c6 y8 x1" id="p18">
+    <p class="unsolved c6 y8 x2" id="p28">
+    <p class="unsolved c7 y8 x3" id="p38">
+    <p class="unsolved c7 y8 x4" id="p48">
+    <p class="unsolved c7 y8 x5" id="p58">
+    <p class="unsolved c8 y8 x6" id="p68">
+    <p class="unsolved c8 y8 x7" id="p78">
+    <p class="unsolved c8 y8 x8" id="p88">
 	</div>
 </div>
 </body>
